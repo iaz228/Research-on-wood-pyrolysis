@@ -9,9 +9,11 @@ import numpy as np
 from math import pi
 
 #Pick file, opens file browser to point to file for analysis
-Tk().withdraw() 
-filename = askopenfilename() 
-print(filename)
+def openFileBrowser():
+    Tk().withdraw() 
+    fileName = askopenfilename() 
+    print(fileName)
+    return fileName
 
 #Function for segmenting the circle, giving outline and dimensions of particle
 def segment_circle(image_path):
@@ -74,5 +76,9 @@ def segment_circle(image_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-# Run the function on selected file
-segment_circle(filename)
+def main():
+    filePath = openFileBrowser()
+    segment_circle(filePath)
+
+if __name__ == "__main__":
+    main()
