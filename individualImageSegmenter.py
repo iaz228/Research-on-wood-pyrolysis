@@ -7,6 +7,7 @@ from tkinter.filedialog import askopenfilename
 import cv2
 import numpy as np
 from math import pi
+import time 
 
 #Pick file, opens file browser to point to file for analysis
 def openFileBrowser():
@@ -18,6 +19,8 @@ def openFileBrowser():
 #Function for segmenting the circle, giving outline and dimensions of particle
 def segment_circle(image_path):
     #Sets size of kernel used for cleaning up image 
+    startTime = time.time()
+    
     kernelSize = 90
 
     #Sets image to grayscale, makes it easier for contouring to be done
@@ -68,7 +71,9 @@ def segment_circle(image_path):
     
     #Print details to terminal. Can be modified to write a csv
     print("Details of Best Fit Ellipse")  
-    print("Area: ", areaOfEllipse, "\tLength: ", lengthOfEllipse,"\t Width: ", widthOfEllipse)      
+    print("Area: ", areaOfEllipse, "\tLength: ", lengthOfEllipse,"\t Width: ", widthOfEllipse) 
+
+    print("Time taken: ", (time.time() - startTime))     
     
     #Shows the segmented image with contour drawing. With video will be replaced with a segmented video
     cv2.imshow("Mask without wires", clean_mask)
