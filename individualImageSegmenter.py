@@ -16,8 +16,25 @@ def openFileBrowser():
     print(fileName)
     return fileName
 
+def choppedContour(cnt, clean_mask, offSet):
+     # Get bounding rectangle of the object
+    x, y, w, h = cv2.boundingRect(cnt)
+        
+    #Finds the height of the top 15% of the image. Top 15% is cut off to remove the large protrusion from wire holding the particle
+    top_offset = int(h * offSet)
+        
+    # Create a clean ROI (Region of Interest) mask
+    clean_roi = np.zeros_like(clean_mask)
+    # Only copy the bottom portion of the object into the clean mask
+    clean_roi[y + top_offset : y + h, x : x + w] = clean_mask[y + top_offset : y + h, x : x + w]
+        
+    #Using the new image with the cut off wire, find new contour for the particle
+    new_contours, _ = cv2.findContours(clean_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    return new_contours
+
 #Function for segmenting the circle, giving outline and dimensions of particle
-def segment_circle(image_path):
+def segment_image(image_path, shape):
     #Sets size of kernel used for cleaning up image 
     startTime = time.time()
     
@@ -44,34 +61,35 @@ def segment_circle(image_path):
     #Takes the first contour the algorithm finds. The second one was larger in given test samples. Subject to change 
     cnt = contours[0]
 
-    # Get bounding rectangle of the object
-    x, y, w, h = cv2.boundingRect(cnt)
-        
-    #Finds the height of the top 15% of the image. Top 15% is cut off to remove the large protrusion from wire holding the particle
-    top_offset = int(h * 0.15)
-        
-    # Create a clean ROI (Region of Interest) mask
-    clean_roi = np.zeros_like(clean_mask)
-    # Only copy the bottom portion of the object into the clean mask
-    clean_roi[y + top_offset : y + h, x : x + w] = clean_mask[y + top_offset : y + h, x : x + w]
-        
-    #Using the new image with the cut off wire, find new contour for the particle
-    new_contours, _ = cv2.findContours(clean_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if new_contours:
-        #Use fitEllipse to find and draw a blue ellipse around the particle. From testing has been very accurate, though consult with proffesor for accuracy
-        best_ellipse = cv2.fitEllipse(new_contours[0])
-        cv2.ellipse(result_img, best_ellipse, (255, 0, 0), 3)
 
+    if(shape == "Circle"):
+
+        new_contours = choppedContour(cnt, clean_mask, 0.15)
+
+        if new_contours:
+        #Use fitEllipse to find and draw a blue ellipse around the particle. From testing has been very accurate, though consult with proffesor for accuracy
+            best_ellipse = cv2.fitEllipse(new_contours[0])
+            cv2.ellipse(result_img, best_ellipse, (255, 0, 0), 3)
+    
     # Display results from the coordinates of the ellipse found
-    lengthOfEllipse = best_ellipse[1][0]
-    widthOfEllipse = best_ellipse[1][1]
+        lengthOfEllipse = best_ellipse[1][0]
+        widthOfEllipse = best_ellipse[1][1]
 
     #Area equation if pi*(length/2)*(width/2)
-    areaOfEllipse = (pi/4) * lengthOfEllipse * widthOfEllipse
+        areaOfEllipse = (pi/4) * lengthOfEllipse * widthOfEllipse
     
     #Print details to terminal. Can be modified to write a csv
-    print("Details of Best Fit Ellipse")  
-    print("Area: ", areaOfEllipse, "\tLength: ", lengthOfEllipse,"\t Width: ", widthOfEllipse) 
+        print("Details of Best Fit Ellipse")  
+        print("Area: ", areaOfEllipse, "\tLength: ", lengthOfEllipse,"\t Width: ", widthOfEllipse) 
+
+    elif(shape == "Rectangle"):
+        new_contours = choppedContour(cnt, clean_mask, 0.10)
+
+        rect = cv2.minAreaRect(new_contours[0])
+        box = cv2.boxPoints(rect)
+        box = box.astype(int)
+        print(box)
+        cv2.drawContours(result_img, [box], 0, (0,0,255),2)
 
     print("Time taken: ", (time.time() - startTime))     
     
@@ -83,7 +101,7 @@ def segment_circle(image_path):
 
 def main():
     filePath = openFileBrowser()
-    segment_circle(filePath)
+    segment_image(filePath, "Rectangle")
 
 if __name__ == "__main__":
     main()
