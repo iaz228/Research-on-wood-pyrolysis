@@ -6,8 +6,9 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import cv2
 import numpy as np
-from math import pi
+from math import pi, sqrt, pow
 import time 
+import csv
 
 #Pick file, opens file browser to point to file for analysis
 def openFileBrowser():
@@ -15,6 +16,9 @@ def openFileBrowser():
     fileName = askopenfilename() 
     print(fileName)
     return fileName
+
+def distance(A, B):
+    return sqrt((pow(A[0] + B[0], 2)) + (pow(A[1] + B[1], 2)))
 
 def choppedContour(cnt, clean_mask, offSet):
      # Get bounding rectangle of the object
@@ -34,7 +38,7 @@ def choppedContour(cnt, clean_mask, offSet):
     return new_contours
 
 #Function for segmenting the circle, giving outline and dimensions of particle
-def segment_image(image_path, shape):
+def segment_image(image_path, shape = "Circle"):
     #Sets size of kernel used for cleaning up image 
     startTime = time.time()
     
@@ -82,15 +86,29 @@ def segment_image(image_path, shape):
         print("Details of Best Fit Ellipse")  
         print("Area: ", areaOfEllipse, "\tLength: ", lengthOfEllipse,"\t Width: ", widthOfEllipse) 
 
+        return areaOfEllipse, lengthOfEllipse, widthOfEllipse
+
     elif(shape == "Rectangle"):
+        #Create chopped contour when rectangle flag is set
         new_contours = choppedContour(cnt, clean_mask, 0.10)
 
+        #Find the minimum area rectangle as a from the first contour. This allows for rotated rectangles
         rect = cv2.minAreaRect(new_contours[0])
+        #Turns into usable lists for drawing on image
         box = cv2.boxPoints(rect)
         box = box.astype(int)
-        print(box)
         cv2.drawContours(result_img, [box], 0, (0,0,255),2)
 
+        #Calculates distanecs between top left and bottom left and top left and top right point to get side lengths
+        height = int(distance(box[0], box[1]))
+        length = int(distance(box[0], box[2]))
+
+        area = height * length
+
+        return area, height, length
+
+        
+    
     print("Time taken: ", (time.time() - startTime))     
     
     #Shows the segmented image with contour drawing. With video will be replaced with a segmented video
