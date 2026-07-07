@@ -37,6 +37,7 @@ def segmentFolder(folderPath, shape, csvName = "meWhen"):
     
             if e.is_file():
                 area, length, width = segment_image(e, shape)
+                print(area)
             
                 writer.writerow([area, length, width])
     
