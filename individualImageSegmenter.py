@@ -2,20 +2,12 @@
 # For: Research with Proffesor Andrea Dernbecher
 # Purpose: Take in image of particle and estimates size of particle
 
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
 import cv2
 import numpy as np
 from math import pi, sqrt, pow
-import time 
 import csv
 
-#Pick file, opens file browser to point to file for analysis
-def openFileBrowser():
-    Tk().withdraw() 
-    fileName = askopenfilename() 
-    print(fileName)
-    return fileName
+
 
 def distance(A, B):
     return sqrt((pow(A[0] + B[0], 2)) + (pow(A[1] + B[1], 2)))
@@ -40,8 +32,6 @@ def choppedContour(cnt, clean_mask, offSet):
 #Function for segmenting the circle, giving outline and dimensions of particle
 def segment_image(image_path, shape = "Circle"):
     #Sets size of kernel used for cleaning up image 
-    startTime = time.time()
-    
     kernelSize = 90
 
     #Sets image to grayscale, makes it easier for contouring to be done
@@ -86,7 +76,7 @@ def segment_image(image_path, shape = "Circle"):
         print("Details of Best Fit Ellipse")  
         print("Area: ", areaOfEllipse, "\tLength: ", lengthOfEllipse,"\t Width: ", widthOfEllipse) 
 
-        return areaOfEllipse, lengthOfEllipse, widthOfEllipse
+        #return areaOfEllipse, lengthOfEllipse, widthOfEllipse
 
     elif(shape == "Rectangle"):
         #Create chopped contour when rectangle flag is set
@@ -105,21 +95,12 @@ def segment_image(image_path, shape = "Circle"):
 
         area = height * length
 
-        return area, height, length
+        #return area, height, length
 
-        
-    
-    print("Time taken: ", (time.time() - startTime))     
+ 
     
     #Shows the segmented image with contour drawing. With video will be replaced with a segmented video
-    cv2.imshow("Mask without wires", clean_mask)
-    cv2.imshow("Segmented Result", result_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-def main():
-    filePath = openFileBrowser()
-    segment_image(filePath, "Rectangle")
-
-if __name__ == "__main__":
-    main()
+    #cv2.imshow("Mask without wires", clean_mask)
+    #cv2.imshow("Segmented Result", result_img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
