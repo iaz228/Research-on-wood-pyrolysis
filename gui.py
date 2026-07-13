@@ -7,6 +7,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import folderSegmenter as fS
+from threading import Thread
+from PIL import ImageTk
 
 
 class imageSegmenterApp(tk.Tk):
@@ -49,7 +51,6 @@ class imageSegmenterApp(tk.Tk):
 
 
 
-
         #For output chop amount gathering
         lChopAmount = tk.Label(text="Chop Amount:", master=inputFrame)
         eChopAmount = tk.Entry(master=inputFrame)
@@ -73,7 +74,7 @@ class imageSegmenterApp(tk.Tk):
 
         #For getting input path, opens dialog when button is pressed
         self.lInputPath = tk.Label(text = "Input Path:", master=inputFrame)
-        self.lInputPathText = tk.Label(text = "", master=inputFrame)
+        self.lInputPathText = tk.Label(text = "", master=inputFrame, width=20)
         self.bInputPath = tk.Button(master= inputFrame, command = self.getFilePath)
         
         self.lInputPath.grid(row=4, column = 0)
@@ -83,12 +84,26 @@ class imageSegmenterApp(tk.Tk):
 
 
         #Start Button
-        self.startButton = tk.Button(width=20, height = 20, master = inputFrame, text = "START!", highlightbackground= "green", command = self.startSegmenting)
+        self.startButton = tk.Button(width=20, height = 20, master = inputFrame, text = "START!", highlightbackground= "green", command = self.threading)
 
         self.startButton.grid(row = 5, column = 1)
 
         
-        inputFrame.pack()
+        inputFrame.grid(row=0, column=0)
+
+
+        outputImageFrame = tk.Frame()
+
+        self.image1 = tk.PhotoImage(file="tu-dortmund-logo-social.png")
+        self.image2 = tk.PhotoImage(file="tu-dortmund-logo-social.png")
+
+        self.lImage1 = tk.Label(master=outputImageFrame, image=self.image1)
+        self.lImage2 = tk.Label(master=outputImageFrame, image=self.image2)
+
+        self.lImage1.grid(row=0, column=0)
+        self.lImage2.grid(row=1, column=0)
+
+        outputImageFrame.grid(row=0, column=1)
 
 
     #Gets entry from associated entry widget and changes button color if change in entry value has happened to signal input has been applied
@@ -106,7 +121,6 @@ class imageSegmenterApp(tk.Tk):
         print(self.inputs[dictKey])
 
 
-
     def comboBoxSelectionChange(self):
         self.inputs["shape"] = self.shapeCombobox.get()
 
@@ -115,22 +129,39 @@ class imageSegmenterApp(tk.Tk):
         self.inputs["inputFilePath"] = filedialog.askdirectory()
         self.lInputPathText.config(text=self.inputs["inputFilePath"])
 
+    def threading(self):
+        t1 = Thread(target=self.startSegmenting)
+        t1.start()
    
     def startSegmenting(self):
         print("STARTING!!!!!!!!!!")
 
         self.startButton.config(text = "In Progress", state="disabled")
 
-        fS.segmentFolder(self.inputs["inputFilePath"], self.inputs["shape"], self.inputs["outputFilePath"])
+        fS.segmentFolder(self.inputs["inputFilePath"], self.inputs["shape"], self.inputs["outputFilePath"], self.updateImginGUI)
 
         self.startButton.config(text = "Start!!!", state="active")
 
+    
+    def updateImginGUI(self, img1):
+
+        photo1 = ImageTk.PhotoImage(img1)
+
+        # Safely push the updates to the main Tkinter thread loop
+        self.after(0, self._set_images_main_thread, img1)
 
 
+    def _set_images_main_thread(self, photo1):
+        """ Runs strictly on the main thread to update the UI elements """
+        photo1 = ImageTk.PhotoImage(photo1)
 
+        # Update Label 1
+        self.lImage1.config(image=photo1)
+        self.lImage1.image = photo1  # Keep explicit reference!
 
-
-
+        # Update Label 2
+        #self.lImage2.config(image=photo2)
+        #self.lImage2.image = photo2  # Keep explicit reference!
 
 if __name__ == "__main__":
     app = imageSegmenterApp()

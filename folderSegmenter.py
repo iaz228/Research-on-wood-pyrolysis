@@ -1,6 +1,6 @@
 # Creator: Ian Zalewski on 25.6.2026
 # For: Research with Proffesor Andrea Dernbecher
-# Purpose: Use indivudla image segmenter to go through folder of images
+# Purpose: Use indivual image segmenter to go through folder of images
 
 from individualImageSegmenter import segment_image
 from tkinter import Tk
@@ -18,32 +18,47 @@ def openFileBrowser():
     return fileName
 
 
-def segmentFolder(folderPath, shape, csvName = "meWhen"):
-
+def segmentFolder(folderPath, shape, csvName = "meWhen", callback=None):
+    
     #Create file path for output csv
-    csvName = csvName + ".csv"
+        csvName = csvName + ".csv"
 
 
     #Opens new csv with file path name
-    with open(csvName, mode='w', newline='') as file:
-        writer = csv.writer(file)
+        with open(csvName, mode='w', newline='') as file:
+            writer = csv.writer(file)
 
         #Adds header rows 
-        writer.writerow([shape, shape, shape])
-        writer.writerow(["Area", "Length", "Width"])
+            writer.writerow([shape, shape, shape])
+            writer.writerow(["Area", "Length", "Width"])
     
         #Uses os to go through and find folder with image files in it
-        for e in os.scandir(folderPath):
-    
-            if e.is_file():
-                area, length, width = segment_image(e, shape)
-                print(area)
-            
-                writer.writerow([area, length, width])
+            for e in os.scandir(folderPath):
+                try:
+                    if e.is_file():
+                        area, length, width, result_img = segment_image(e.path, shape)
+
+                        writer.writerow([area, length, width])
+
+                        callback(result_img)
+                except Exception as e: 
+                    print("Attempt Failed:" + e)
+
+            for e in os.scandir(phosphorFolderPath):
+                try:
+                    if e.is_file():
+                        area, length, width, result_img = segment_image(e.path, shape)
+
+                        writer.writerow([area, length, width])
+
+                        callback(result_img)
+                except Exception as e: 
+                    print("Attempt Failed:" + e)
+
     
 
-        
-
+                
+    
                 
 
 def main():
