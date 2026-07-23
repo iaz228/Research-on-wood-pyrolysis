@@ -68,7 +68,7 @@ def segment_image(image_path, shape = "Circle", type="Highspeed"):
 
     if type == "Highspeed":
         new_contours = choppedContour(cnt, clean_mask, 0.15)
-    else:
+    elif type == "Phosphor":
         new_contours = choppedContour(cnt, clean_mask, 0)
 
     if(shape == "Circle"):

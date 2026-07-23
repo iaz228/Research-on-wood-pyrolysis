@@ -9,6 +9,9 @@ from tkinter import filedialog
 import folderSegmenter as fS
 from threading import Thread
 from PIL import ImageTk
+import os
+
+os.environ["OPENCV_LOG_LEVEL"] = "SILENT"
 
 
 class imageSegmenterApp(tk.Tk):
@@ -121,7 +124,7 @@ class imageSegmenterApp(tk.Tk):
         print(self.inputs[dictKey])
 
 
-    def comboBoxSelectionChange(self):
+    def comboBoxSelectionChange(self, event=None):
         self.inputs["shape"] = self.shapeCombobox.get()
 
 
@@ -148,22 +151,21 @@ class imageSegmenterApp(tk.Tk):
         photo1 = ImageTk.PhotoImage(img1)
 
         # Safely push the updates to the main Tkinter thread loop
-        self.after(0, self._set_images_main_thread, img1, imageNumber)
+        self.after(0, self.set_images_main_thread, img1, imageNumber)
 
-
-    def _set_images_main_thread(self, photo, imageNumber):
+    def set_images_main_thread(self, photo, imageNumber):
         """ Runs strictly on the main thread to update the UI elements """
         photo = ImageTk.PhotoImage(photo)
 
         # Update Label 1
         if(imageNumber == 1):
             self.lImage1.config(image=photo)
-            self.lImage1.image = photo  # Keep explicit reference!
+            self.lImage1.image = photo  # Keep explicit reference
 
         # Update Label 2
         if(imageNumber == 2): 
             self.lImage2.config(image=photo)
-            self.lImage2.image = photo  # Keep explicit reference!
+            self.lImage2.image = photo  # Keep explicit reference
 
 if __name__ == "__main__":
     app = imageSegmenterApp()

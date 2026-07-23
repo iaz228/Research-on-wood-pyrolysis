@@ -5,16 +5,25 @@ import re
 from pathlib import Path
 
 def getAllTimeStamps(folderPath):
+
+    folderPathSilhouette = None
+    folderPathPhosphor = None
+
     for e in os.scandir(folderPath):
-        for file in os.scandir(e):
-            if Path(file).suffix.lower() == ".txt":
-                silTimeStamps = silTimeStampGetter(file)
+        if e.is_dir():
+            for file in os.scandir(e):
+                if file.is_file():
+                    if Path(file.path).suffix.lower() == ".txt":
+                        silTimeStamps, timerPerImg = silTimeStampGetter(file)
 
-            elif Path(file).suffix.lower() == ".xlsx":
-                phosphorTimeStamps = getPhosphorTimeStamps(file)
+                        folderPathSilhouette = e.path
+
+                    elif Path(file).suffix.lower() == ".xlsx" and not file.name.startswith("~$"):
+                            phosphorTimeStamps = getPhosphorTimeStamps(file)
+
+                            folderPathPhosphor = e.path
     
-    return silTimeStamps, phosphorTimeStamps
-
+    return silTimeStamps, phosphorTimeStamps, folderPathSilhouette, folderPathPhosphor, timerPerImg
 
 
 
@@ -46,7 +55,7 @@ def silTimeStampGetter(file_path):
     else:
         timestamps = []
 
-    return timestamps
+    return timestamps, seconds_per_frame
 
 
 def getPhosphorTimeStamps(file_path):
