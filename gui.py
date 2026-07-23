@@ -84,7 +84,7 @@ class imageSegmenterApp(tk.Tk):
 
 
         #Start Button
-        self.startButton = tk.Button(width=20, height = 20, master = inputFrame, text = "START!", highlightbackground= "green", command = self.threading)
+        self.startButton = tk.Button(width=20, height = 4, master = inputFrame, text = "START!", highlightbackground= "green", command = self.threading)
 
         self.startButton.grid(row = 5, column = 1)
 
@@ -143,25 +143,27 @@ class imageSegmenterApp(tk.Tk):
         self.startButton.config(text = "Start!!!", state="active")
 
     
-    def updateImginGUI(self, img1):
+    def updateImginGUI(self, img1, imageNumber):
 
         photo1 = ImageTk.PhotoImage(img1)
 
         # Safely push the updates to the main Tkinter thread loop
-        self.after(0, self._set_images_main_thread, img1)
+        self.after(0, self._set_images_main_thread, img1, imageNumber)
 
 
-    def _set_images_main_thread(self, photo1):
+    def _set_images_main_thread(self, photo, imageNumber):
         """ Runs strictly on the main thread to update the UI elements """
-        photo1 = ImageTk.PhotoImage(photo1)
+        photo = ImageTk.PhotoImage(photo)
 
         # Update Label 1
-        self.lImage1.config(image=photo1)
-        self.lImage1.image = photo1  # Keep explicit reference!
+        if(imageNumber == 1):
+            self.lImage1.config(image=photo)
+            self.lImage1.image = photo  # Keep explicit reference!
 
         # Update Label 2
-        #self.lImage2.config(image=photo2)
-        #self.lImage2.image = photo2  # Keep explicit reference!
+        if(imageNumber == 2): 
+            self.lImage2.config(image=photo)
+            self.lImage2.image = photo  # Keep explicit reference!
 
 if __name__ == "__main__":
     app = imageSegmenterApp()

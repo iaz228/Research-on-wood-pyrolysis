@@ -12,10 +12,6 @@ import tkinter as Tk
 
 
 
-
-def distance(A, B):
-    return sqrt((pow(A[0] + B[0], 2)) + (pow(A[1] + B[1], 2)))
-
 def choppedContour(cnt, clean_mask, offSet):
      # Get bounding rectangle of the object
     x, y, w, h = cv2.boundingRect(cnt)
@@ -99,14 +95,12 @@ def segment_image(image_path, shape = "Circle", type="Highspeed"):
         cv2.drawContours(result_img, [box], 0, (0,0,255),2)
 
         #Calculates distanecs between top left and bottom left and top left and top right point to get side lengths
-        height = int(distance(box[0], box[1]))
-        length = int(distance(box[0], box[2]))
+        length, width = rect[1]
 
-        area = height * length
-
+        area = width * length
 
 
-    #result_img = convertImageToPILImage(result_img)
+    result_img = convertImageToPILImage(result_img)
 
     return area, length, width, result_img
     
@@ -119,13 +113,13 @@ def convertImageToPILImage(img):
 
     return result_img
 
-if __name__ == "__main__": 
+#if __name__ == "__main__": 
 
-    fileName = askopenfilename() 
-    area, length, width, img = segment_image(fileName, "Rectangle", type="Phosphor")
-
-    cv2.imshow("img", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows() 
+ #   fileName = askopenfilename() 
+ #   area, length, width, img = segment_image(fileName, "Rectangle", type="Phosphor")
+#
+  #  cv2.imshow("img", img)
+   # cv2.waitKey(0)
+    #cv2.destroyAllWindows() 
 
     
