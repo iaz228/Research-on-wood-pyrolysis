@@ -10,7 +10,7 @@ from pathlib import Path
 from tkinter import filedialog
 import timeStamps
 import pandas as pd
-from numpy import nan
+
 
 VALID_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 
@@ -27,7 +27,7 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", callback=None):
     silTimestamp, phosTimeStamps, folderPathSilhouette, folderPathPhosphor, timePerImg = timeStamps.getAllTimeStamps(mainFolderPath)
 
     #create arrays to be appended to
-    
+    timeStamp = []
     lengthSL = []
     heightSL = []
     areaSL = [] 
@@ -57,9 +57,9 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", callback=None):
                 callback(result_img, 1)
         except Exception as e: 
             print("Attempt Failed:")
-            areaSL.append(nan)
-            lengthSL.append(nan)
-            heightSL.append(nan)
+            areaSL.append(-1)
+            lengthSL.append(-1)
+            heightSL.append(-1)
 
     #Go through folder of phosphor photos
     for e in phos_files:
@@ -75,9 +75,9 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", callback=None):
                 callback(result_img, 2)
         except Exception as exp: 
             print(exp)
-            widthPL.append(nan)
-            heightPL.append(nan)
-            areaPL.append(nan)
+            widthPL.append(-1)
+            heightPL.append(-1)
+            areaPL.append(-1)
 
 
     min_length_sil = min(len(silTimestamp), len(areaSL), len(lengthSL), len(heightSL))

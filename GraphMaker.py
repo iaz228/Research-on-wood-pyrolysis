@@ -1,47 +1,122 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from math import pi
+from numpy import nan
 
-numRows = 1
-numCols = 3
 
+def generateGraphs(inputCSV, shape="Rectangle"):
 
-def generateGraphs(inputCSV):
-    
     df = pd.read_csv(inputCSV)
 
+    # 1. Expand figure size (Width: 16 inches, Height: 5 inches)
+    fig = plt.figure(figsize=(16, 9))
 
-    plt.subplot(numRows,numCols, 1)
-    plt.plot(df["Time_s"], df["Area_Sil"], "o")
+    numRows, numCols = 3, 3
 
-    plt.title("Area")
-    plt.xlabel("Time Since Experiment Start")
-    plt.ylabel("Area")  
-    plt.grid()
-    
-    plt.subplot(numRows,numCols, 2)
-    plt.plot(df["Time_s"], df["Length_Sil"], "o")
+    # Plot 1: Area
+    plt.subplot(numRows, numCols, 1)
+    plt.plot(df["Time_s"], df["Area_Sil"], "o", markersize=4, alpha=0.7)
+    plt.title("Area vs Time Sil")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Area")
+    plt.grid(True)
 
-    plt.title("Length")
-    plt.xlabel("Time Since Experiment Start")
-    plt.ylabel("Length")   
-    plt.grid()
+    # Plot 2: Length
+    plt.subplot(numRows, numCols, 2)
+    plt.plot(df["Time_s"], df["Length_Sil"], "o", markersize=4, alpha=0.7)
+    plt.title("Length vs Time Sil")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Length")
+    plt.grid(True)
 
-    plt.subplot(numRows,numCols, 3)
-    plt.plot(df["Time_s"], df["Length_Sil"], "o")
+    # Plot 3: Height
+    plt.subplot(numRows, numCols, 3)
+    plt.plot(df["Time_s"], df["Height_Sil"], "o", markersize=4, alpha=0.7)
+    plt.title("Height vs Time Sil")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Height")
+    plt.grid(True)
 
-    plt.title("Length")
-    plt.xlabel("Time Since Experiment Start")
-    plt.ylabel("Length")   
-    plt.grid()
 
-    plt.subplots_adjust(left=0.2, wspace=0.3)
-    plt.suptitle("Attributes vs Time for Silhouette Camera")
+    #Generates a new data frame with only the rows with values in Phosphor Columns
+    dfPhosphor = df.copy()
+    dfPhosphor = dfPhosphor[dfPhosphor["Area_Phos"] != -1]
+    dfPhosphor.to_csv("phos" + inputCSV)
+
+     # Plot 1: Area
+    plt.subplot(numRows, numCols, 4)
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Area_Phos"], "o", markersize=4, alpha=0.7)
+    plt.title("Area vs Time Phos")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Area")
+    plt.grid(True)
+
+    # Plot 2: Width
+    plt.subplot(numRows, numCols, 5)
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Width_Phos"], "o", markersize=4, alpha=0.7)
+    plt.title("Width vs TimePhos")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Width")
+    plt.grid(True)
+
+    # Plot 3: Height
+    plt.subplot(numRows, numCols, 6)
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Height_Phos"], "o", markersize=4, alpha=0.7)
+    plt.title("Height vs Time Phos")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Height")
+    plt.grid(True)
+
+
+    #Generate row for volume of the cube
+    if(shape == "Rectangle"):
+        dfPhosphor["Volume"] = dfPhosphor["Area_Sil"] * dfPhosphor["Width_Phos"]
+    elif(shape == "Circle"):
+        dfPhosphor["Volume"] = (4/3) * pi * dfPhosphor["Area_Sil"] * dfPhosphor["Width_Phos"]
+    else: 
+        print("Non-valid shape")
+
+    #Plot Volume over Time
+    plt.subplot(numRows, numCols, 7)
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Volume"], "o", markersize=4, alpha=0.7)
+    plt.title("Volume vs Time Phos")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.ylabel("Volume")
+    plt.grid(True)
+
+    #Plot every dimension on the same graph
+
+    plt.subplot(numRows, numCols, 8)
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Length_Sil"], "o", markersize=4, alpha=0.7, label="Length")
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Height_Sil"], "o", markersize=4, alpha=0.7, label="Height")
+    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Width_Phos"], "o", markersize=4, alpha=0.7, label="Width")
+    plt.title("Dimensions vs Time")
+    plt.xlabel("Time Since Experiment Start (s)")
+    plt.grid(True)
+
+    plt.legend(loc="lower left")
+
+
+
+
+
+
+
+
+    # 2. Main Title & Automatic Padding Adjustment
+    plt.suptitle("Attributes vs Time", fontsize=14, y=1.02)
+    plt.tight_layout()
+
+    # 3. Save with high resolution and clear bounds
+    plt.savefig("testImage.png", dpi=300, bbox_inches="tight")
     plt.show()
 
 
+    
+
 
 def main():
-    generateGraphs("/Users/izalewski/Documents/TU-Dortmund ISP Research/test.csv")
+    generateGraphs("/Users/izalewski/Documents/TU-Dortmund ISP Research/fullRun.csv")
 
 if __name__=="__main__":
     main()
