@@ -21,7 +21,7 @@ class imageSegmenterApp(tk.Tk):
         self.title("Image Processing for Pyrolosis Research")
         
         #Creates self varaibles to be passed through to the folder segmeneter function
-        self.inputs = {"outputFilePath": "", "chopAmount": 0.1, "chopRate": 0.01, "shape": "Circle", "inputFilePath": ""}
+        self.inputs = {"outputFilePath": "", "chopAmount": 0.1, "chopRate": 0.01, "shape": "Circle", "Dim": -1, "frameSkip": 1, "inputFilePath": ""}
 
         # Build the layout elements cleanly
         self.create_widgets()
@@ -74,22 +74,40 @@ class imageSegmenterApp(tk.Tk):
         eChopRateChange.grid(row=3, column=1, padx=5, pady=5)
         bChopRateChange.grid(row=3, column=2, padx=5, pady=5)
 
+        #For output chop amount gathering
+        lDim = tk.Label(text="Main Dimension Length:", master=inputFrame)
+        eDim = tk.Entry(master=inputFrame)
+        bDim = tk.Button(master= inputFrame, command = lambda: self.generalEntryGet("Dim", bDim, eDim, True))
+
+        lDim.grid(row=4, column=0, padx=5, pady=5)
+        eDim.grid(row=4, column=1, padx=5, pady=5)
+        bDim.grid(row=4, column=2, padx=5, pady=5)
+
+        #For Frame skip number gathering
+        lFrameSkip = tk.Label(text="Frame Skip Number:", master=inputFrame)
+        eFrameSkip = tk.Entry(master=inputFrame)
+        bFrameSkip = tk.Button(master= inputFrame, command = lambda: self.generalEntryGet("frameSkip", bFrameSkip, eFrameSkip, True))
+
+        lFrameSkip.grid(row=5, column=0, padx=5, pady=5)
+        eFrameSkip.grid(row=5, column=1, padx=5, pady=5)
+        bFrameSkip.grid(row=5, column=2, padx=5, pady=5)
+
 
         #For getting input path, opens dialog when button is pressed
         self.lInputPath = tk.Label(text = "Input Path:", master=inputFrame)
         self.lInputPathText = tk.Label(text = "", master=inputFrame, width=20)
         self.bInputPath = tk.Button(master= inputFrame, command = self.getFilePath)
         
-        self.lInputPath.grid(row=4, column = 0)
-        self.bInputPath.grid(row=4, column = 1)
-        self.lInputPathText.grid(row=4, column = 2)
+        self.lInputPath.grid(row=6, column = 0)
+        self.bInputPath.grid(row=6, column = 1)
+        self.lInputPathText.grid(row=6, column = 2)
 
 
 
         #Start Button
         self.startButton = tk.Button(width=20, height = 4, master = inputFrame, text = "START!", highlightbackground= "green", command = self.threading)
 
-        self.startButton.grid(row = 5, column = 1)
+        self.startButton.grid(row = 7, column = 1)
 
         
         inputFrame.grid(row=0, column=0)
@@ -141,15 +159,17 @@ class imageSegmenterApp(tk.Tk):
 
         self.startButton.config(text = "In Progress", state="disabled")
 
-        fS.segmentFolder(self.inputs["inputFilePath"], self.inputs["shape"], self.inputs["outputFilePath"], self.updateImginGUI)
+        fS.segmentFolder(mainFolderPath=self.inputs["inputFilePath"], 
+                         shape=self.inputs["shape"], 
+                         csvName=self.inputs["outputFilePath"], 
+                         chopAmount=self.inputs["chopAmount"], 
+                         dimension=self.inputs["Dim"], 
+                         callback=self.updateImginGUI)
 
         self.startButton.config(text = "Start!!!", state="active")
 
     
     def updateImginGUI(self, img1, imageNumber):
-
-        photo1 = ImageTk.PhotoImage(img1)
-
         # Safely push the updates to the main Tkinter thread loop
         self.after(0, self.set_images_main_thread, img1, imageNumber)
 

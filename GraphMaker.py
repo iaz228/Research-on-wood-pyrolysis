@@ -13,15 +13,7 @@ def generateGraphs(inputCSV, shape="Rectangle"):
 
     numRows, numCols = 3, 3
 
-    # Plot 1: Area
-    plt.subplot(numRows, numCols, 1)
-    plt.plot(df["Time_s"], df["Area_Sil"], "o", markersize=4, alpha=0.7)
-    plt.title("Area vs Time Sil")
-    plt.xlabel("Time Since Experiment Start (s)")
-    plt.ylabel("Area")
-    plt.grid(True)
-
-    # Plot 2: Length
+    # Plot 1: Length
     plt.subplot(numRows, numCols, 2)
     plt.plot(df["Time_s"], df["Length_Sil"], "o", markersize=4, alpha=0.7)
     plt.title("Length vs Time Sil")
@@ -29,7 +21,7 @@ def generateGraphs(inputCSV, shape="Rectangle"):
     plt.ylabel("Length")
     plt.grid(True)
 
-    # Plot 3: Height
+    # Plot 2: Height
     plt.subplot(numRows, numCols, 3)
     plt.plot(df["Time_s"], df["Height_Sil"], "o", markersize=4, alpha=0.7)
     plt.title("Height vs Time Sil")
@@ -43,15 +35,7 @@ def generateGraphs(inputCSV, shape="Rectangle"):
     dfPhosphor = dfPhosphor[dfPhosphor["Area_Phos"] != -1]
     dfPhosphor.to_csv("phos" + inputCSV)
 
-     # Plot 1: Area
-    plt.subplot(numRows, numCols, 4)
-    plt.plot(dfPhosphor["Time_s"], dfPhosphor["Area_Phos"], "o", markersize=4, alpha=0.7)
-    plt.title("Area vs Time Phos")
-    plt.xlabel("Time Since Experiment Start (s)")
-    plt.ylabel("Area")
-    plt.grid(True)
-
-    # Plot 2: Width
+    # Plot 3: Width
     plt.subplot(numRows, numCols, 5)
     plt.plot(dfPhosphor["Time_s"], dfPhosphor["Width_Phos"], "o", markersize=4, alpha=0.7)
     plt.title("Width vs TimePhos")
@@ -59,22 +43,13 @@ def generateGraphs(inputCSV, shape="Rectangle"):
     plt.ylabel("Width")
     plt.grid(True)
 
-    # Plot 3: Height
+    # Plot 4: Height
     plt.subplot(numRows, numCols, 6)
     plt.plot(dfPhosphor["Time_s"], dfPhosphor["Height_Phos"], "o", markersize=4, alpha=0.7)
     plt.title("Height vs Time Phos")
     plt.xlabel("Time Since Experiment Start (s)")
     plt.ylabel("Height")
     plt.grid(True)
-
-
-    #Generate row for volume of the cube
-    if(shape == "Rectangle"):
-        dfPhosphor["Volume"] = dfPhosphor["Area_Sil"] * dfPhosphor["Width_Phos"]
-    elif(shape == "Circle"):
-        dfPhosphor["Volume"] = (4/3) * pi * dfPhosphor["Area_Sil"] * dfPhosphor["Width_Phos"]
-    else: 
-        print("Non-valid shape")
 
     #Plot Volume over Time
     plt.subplot(numRows, numCols, 7)
@@ -95,12 +70,6 @@ def generateGraphs(inputCSV, shape="Rectangle"):
     plt.grid(True)
 
     plt.legend(loc="lower left")
-
-
-
-
-
-
 
 
     # 2. Main Title & Automatic Padding Adjustment

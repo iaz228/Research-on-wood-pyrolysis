@@ -30,7 +30,7 @@ def choppedContour(cnt, clean_mask, offSet):
     return new_contours
 
 #Function for segmenting the circle, giving outline and dimensions of particle
-def segment_image(image_path, shape = "Circle", type="Highspeed"):
+def segment_image(image_path, shape = "Circle", type="Highspeed", chopAmount = 0.12):
 
     #Sets size of kernel used for cleaning up image 
     if type == "Highspeed":
@@ -40,6 +40,9 @@ def segment_image(image_path, shape = "Circle", type="Highspeed"):
 
     #Sets image to grayscale, makes it easier for contouring to be done
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+    if img is None:
+        return -1, -1, None
     
     #Inverts colors of the the image, uses algorithm to determine best values
     if type == "Highspeed":
@@ -62,12 +65,13 @@ def segment_image(image_path, shape = "Circle", type="Highspeed"):
     #Takes the first contour the algorithm finds. The second one was larger in given test samples. Subject to change 
     cnt = contours[0]
 
-    area = -1
     length = -1
     width = -1
 
+    new_contours = []
+
     if type == "Highspeed":
-        new_contours = choppedContour(cnt, clean_mask, 0.15)
+        new_contours = choppedContour(cnt, clean_mask, chopAmount)
     elif type == "Phosphor":
         new_contours = choppedContour(cnt, clean_mask, 0)
 
@@ -82,8 +86,7 @@ def segment_image(image_path, shape = "Circle", type="Highspeed"):
         length = best_ellipse[1][0]
         width = best_ellipse[1][1]
 
-    #Area equation if pi*(length/2)*(width/2)
-        area = (pi/4) * length * width
+    
 
     elif(shape == "Rectangle"):
 
@@ -97,12 +100,10 @@ def segment_image(image_path, shape = "Circle", type="Highspeed"):
         #Calculates distanecs between top left and bottom left and top left and top right point to get side lengths
         length, width = rect[1]
 
-        area = width * length
-
 
     result_img = convertImageToPILImage(result_img)
 
-    return area, length, width, result_img
+    return length, width, result_img
     
 
 def convertImageToPILImage(img):
@@ -114,12 +115,12 @@ def convertImageToPILImage(img):
     return result_img
 
 #if __name__ == "__main__": 
-
- #   fileName = askopenfilename() 
- #   area, length, width, img = segment_image(fileName, "Rectangle", type="Phosphor")
 #
-  #  cv2.imshow("img", img)
-   # cv2.waitKey(0)
-    #cv2.destroyAllWindows() 
+#    fileName = askopenfilename() 
+#    length, width, img = segment_image(fileName, "Rectangle", type="Phosphor")
+#
+#    cv2.imshow("img", img)
+#    cv2.waitKey(0)
+#    cv2.destroyAllWindows() 
 
     

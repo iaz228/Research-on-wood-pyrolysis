@@ -10,6 +10,7 @@ from pathlib import Path
 from tkinter import filedialog
 import timeStamps
 import pandas as pd
+from math import pi
 
 
 VALID_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
@@ -22,42 +23,46 @@ def openFileBrowser():
     return fileName
 
 
-def segmentFolder(mainFolderPath, shape, csvName = "meWhen", callback=None):
+def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1, chopAmount =0.12, dimension = 2, callback=None):
     
-    silTimestamp, phosTimeStamps, folderPathSilhouette, folderPathPhosphor, timePerImg = timeStamps.getAllTimeStamps(mainFolderPath)
+    startTime, timePerImg, phosTimeStamps, folderPathSilhouette, folderPathPhosphor = timeStamps.getAllTimeStamps(mainFolderPath)
 
     #create arrays to be appended to
-    timeStamp = []
+    timeStampsSil = []
+
     lengthSL = []
     heightSL = []
-    areaSL = [] 
 
     widthPL = []
     heightPL = []
-    areaPL = []
 
-
-    #Create file path for output csv
-    csvName = csvName + ".csv"
-
+    #Sort Folders so images are read in the correct orders
     sil_files = sorted([e for e in os.scandir(folderPathSilhouette)if e.is_file() and Path(e.path).suffix.lower() in VALID_EXTENSIONS], key=lambda x: x.name)
     phos_files = sorted([e for e in os.scandir(folderPathPhosphor)if e.is_file() and Path(e.path).suffix.lower() in VALID_EXTENSIONS],key=lambda x: x.name)
 
+    
+    numIterations = 0
+
     #Uses os to go through and find folder with image files in it
-    for e in sil_files:
+    for i, e in enumerate(sil_files):
+
+        if(i % frameSkipNumber != 0):
+            continue
+
+        timeStampsSil.append(startTime + pd.Timedelta(seconds = i * timePerImg))
+        
+        
         try:
             if e.is_file() and (Path(e.path).suffix.lower() in VALID_EXTENSIONS):
                 print(e.path)
-                areaS, lengthS, heightS, result_img = segment_image(e.path, shape, "Highspeed")
+                lengthS, heightS, result_img = segment_image(e.path, shape, chopAmount, "Highspeed")
 
-                areaSL.append(areaS)
                 lengthSL.append(lengthS)
                 heightSL.append(heightS)
 
                 callback(result_img, 1)
         except Exception as e: 
-            print("Attempt Failed:")
-            areaSL.append(-1)
+            print(e)
             lengthSL.append(-1)
             heightSL.append(-1)
 
@@ -66,59 +71,65 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", callback=None):
         try:
             if e.is_file() and (Path(e.path).suffix.lower() in VALID_EXTENSIONS):
                 print(e.path)
-                areaP, widthP, heightP, result_img = segment_image(e.path, shape, "Phosphor")
+                widthP, heightP, result_img = segment_image(e.path, shape, "Phosphor")
 
                 widthPL.append(widthP)
                 heightPL.append(heightP)
-                areaPL.append(areaP)
 
                 callback(result_img, 2)
         except Exception as exp: 
             print(exp)
             widthPL.append(-1)
             heightPL.append(-1)
-            areaPL.append(-1)
+
+    ##Area equation if pi*(length/2)*(width/2)
+    #area = (pi/4) * length * width
+
+    dfSilhouette = pd.DataFrame({"TimeStamp": timeStampsSil, "Length_Sil": lengthSL, "Height_Sil": heightSL})
+    
+
+    min_length_phos = min(len(phosTimeStamps), len(widthPL), len(heightPL))
+
+    dfPhosphor = pd.DataFrame({"TimeStamp": phosTimeStamps[:min_length_phos],"Width_Phos": widthPL[:min_length_phos],"Height_Phos": heightPL[:min_length_phos]})
+
+    dfSilhouette = dfSilhouette.sort_values("TimeStamp").reset_index(drop=True)
+    dfPhosphor = dfPhosphor.sort_values("TimeStamp").reset_index(drop=True)
+
+    mergedDf = pd.merge_asof(dfSilhouette, dfPhosphor, on="TimeStamp", direction="nearest", tolerance=pd.Timedelta(seconds=timePerImg))
+
+    start_time = mergedDf["TimeStamp"].iloc[0]
+    mergedDf["Time_s"] = (mergedDf["TimeStamp"] - start_time).dt.total_seconds().round(4)
 
 
-    min_length_sil = min(len(silTimestamp), len(areaSL), len(lengthSL), len(heightSL))
+    
+    mergedDfPixels = mergedDf.copy()
 
-    dfSilhouette = pd.DataFrame({"Timestamp": silTimestamp[:min_length_sil],"Area_Sil": areaSL[:min_length_sil],"Length_Sil": lengthSL[:min_length_sil],"Height_Sil": heightSL[:min_length_sil]})
+    if shape == "Rectangle":
+        mergedDfPixels["Volume"] = mergedDfPixels["Length_Sil"] * mergedDfPixels["Height_Sil"] * mergedDfPixels["Width_Phos"]
+    elif shape == "Circle":
+        mergedDfPixels["Volume"] = (4/3) * pi * mergedDfPixels["Length_Sil"] * mergedDfPixels["Height_Sil"] * mergedDfPixels["Width_Phos"]
+    
+    mergedDfPixels.to_csv(csvName + "inPixels.csv", index=False)
 
 
-    min_length_phos = min(len(phosTimeStamps), len(areaPL), len(widthPL), len(heightPL))
 
-    dfPhosphor = pd.DataFrame({"Timestamp": phosTimeStamps[:min_length_phos],"Area_Phos": areaPL[:min_length_phos],"Width_Phos": widthPL[:min_length_phos],"Height_Phos": heightPL[:min_length_phos]})
 
-    dfSilhouette = dfSilhouette.sort_values("Timestamp").reset_index(drop=True)
-    dfPhosphor = dfPhosphor.sort_values("Timestamp").reset_index(drop=True)
+    mergedDfCM = mergedDf.copy()
 
-    mergedDf = pd.merge_asof(dfSilhouette, dfPhosphor, on="Timestamp", direction="nearest", tolerance=pd.Timedelta(seconds=timePerImg - 0.0001))
+    dataColumns = ["Length_Sil", "Height_Sil", "Width_Phos", "Height_Phos"]
 
-    start_time = mergedDf["Timestamp"].iloc[0]
-    mergedDf["Time_s"] = (mergedDf["Timestamp"] - start_time).dt.total_seconds().round(4)
+    for entry in dataColumns:
+        mergedDfCM[entry]= mergedDfCM[entry].apply(mapToCm, inputMax= mergedDfCM[entry].iloc[0], outputMax=dimension)
 
-    phosphor_cols = ["Area_Phos", "Width_Phos", "Height_Phos"]
-    mergedDf[phosphor_cols] = mergedDf[phosphor_cols].fillna(-1)  
+    if shape == "Rectangle":
+        mergedDfCM["Volume"] = mergedDfCM["Length_Sil"] * mergedDfCM["Height_Sil"] * mergedDfCM["Width_Phos"]
+    elif shape == "Circle":
+        mergedDfCM["Volume"] = (4/3) * pi * mergedDfCM["Length_Sil"] * mergedDfCM["Height_Sil"] * mergedDfCM["Width_Phos"]
 
-    mergedDf.to_csv(csvName, index=False)
-        
+    mergedDfCM.to_csv(csvName + "inCM.csv", index=False)
 
-def main():
 
-    #Pulls of directory dialog
-    filePath = filedialog.askdirectory()
-    shape = ""
 
-    #Forces user to input correct shapes
-    while shape != "Rectangle" and shape != "Circle":
-        shape = input("Please enter Circle or Rectangle: ")
+def mapToCm(value, inputMax, outputMax):
+    return (value * outputMax) / inputMax
 
-        if(shape != "Rectangle" and shape != "Circle"):
-            print("Error, please input correct shape!")
-
-    csvName = input("Enter CSV name: ")
-
-    segmentFolder(filePath, shape, csvName)
-
-if __name__ == "__main__":
-    main()

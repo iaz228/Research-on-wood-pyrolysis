@@ -14,7 +14,7 @@ def getAllTimeStamps(folderPath):
             for file in os.scandir(e):
                 if file.is_file():
                     if Path(file.path).suffix.lower() == ".txt":
-                        silTimeStamps, timerPerImg = silTimeStampGetter(file)
+                        startTime, timePerImg = silTimeStampGetter(file)
 
                         folderPathSilhouette = e.path
 
@@ -23,7 +23,7 @@ def getAllTimeStamps(folderPath):
 
                             folderPathPhosphor = e.path
     
-    return silTimeStamps, phosphorTimeStamps, folderPathSilhouette, folderPathPhosphor, timerPerImg
+    return startTime, timePerImg, phosphorTimeStamps, folderPathSilhouette, folderPathPhosphor 
 
 
 
@@ -49,13 +49,9 @@ def silTimeStampGetter(file_path):
     interval_match = re.search(r"Average time interval between consecutive images:\s*([0-9.]+)", text)
     seconds_per_frame = (float(interval_match.group(1)) if interval_match else None)
 
-    # 4. Generate list of pd.Timestamp objects for each frame
-    if start_time is not None and seconds_per_frame is not None and num_images > 0:
-        timestamps = [start_time + pd.Timedelta(seconds=i * seconds_per_frame) for i in range(num_images)]
-    else:
-        timestamps = []
+    
 
-    return timestamps, seconds_per_frame
+    return start_time, seconds_per_frame
 
 
 def getPhosphorTimeStamps(file_path):
