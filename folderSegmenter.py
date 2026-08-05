@@ -7,10 +7,10 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import os 
 from pathlib import Path
-from tkinter import filedialog
 import timeStamps
 import pandas as pd
 from math import pi
+import re
 
 
 VALID_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
@@ -38,10 +38,13 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1
 
     #Sort Folders so images are read in the correct orders
     sil_files = sorted([e for e in os.scandir(folderPathSilhouette)if e.is_file() and Path(e.path).suffix.lower() in VALID_EXTENSIONS], key=lambda x: x.name)
-    phos_files = sorted([e for e in os.scandir(folderPathPhosphor)if e.is_file() and Path(e.path).suffix.lower() in VALID_EXTENSIONS],key=lambda x: x.name)
+    phos_files = sorted([ e for e in os.scandir(folderPathPhosphor) if e.is_file() and Path(e.path).suffix.lower() in VALID_EXTENSIONS],key=natural_keys)
 
     
     numIterations = 0
+
+    if(frameSkipNumber < 1):
+        frameSkipNumber = 1
 
     #Uses os to go through and find folder with image files in it
     for i, e in enumerate(sil_files):
@@ -55,7 +58,7 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1
         try:
             if e.is_file() and (Path(e.path).suffix.lower() in VALID_EXTENSIONS):
                 print(e.path)
-                lengthS, heightS, result_img = segment_image(e.path, shape, chopAmount, "Highspeed")
+                lengthS, heightS, result_img = segment_image(image_path=e.path, shape=shape, chopAmount=chopAmount, type="Highspeed")
 
                 lengthSL.append(lengthS)
                 heightSL.append(heightS)
@@ -71,7 +74,7 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1
         try:
             if e.is_file() and (Path(e.path).suffix.lower() in VALID_EXTENSIONS):
                 print(e.path)
-                widthP, heightP, result_img = segment_image(e.path, shape, "Phosphor")
+                widthP, heightP, result_img = segment_image(image_path=e.path, shape=shape, type="Phosphor")
 
                 widthPL.append(widthP)
                 heightPL.append(heightP)
@@ -95,11 +98,10 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1
     dfSilhouette = dfSilhouette.sort_values("TimeStamp").reset_index(drop=True)
     dfPhosphor = dfPhosphor.sort_values("TimeStamp").reset_index(drop=True)
 
-    mergedDf = pd.merge_asof(dfSilhouette, dfPhosphor, on="TimeStamp", direction="nearest", tolerance=pd.Timedelta(seconds=timePerImg))
+    mergedDf = pd.merge_asof(dfSilhouette, dfPhosphor, on="TimeStamp", direction="nearest", tolerance=pd.Timedelta(seconds=(frameSkipNumber+1)* timePerImg))
 
     start_time = mergedDf["TimeStamp"].iloc[0]
     mergedDf["Time_s"] = (mergedDf["TimeStamp"] - start_time).dt.total_seconds().round(4)
-
 
     
     mergedDfPixels = mergedDf.copy()
@@ -112,14 +114,12 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1
     mergedDfPixels.to_csv(csvName + "inPixels.csv", index=False)
 
 
-
-
-    mergedDfCM = mergedDf.copy()
+    mergedDfCM = mergedDfPixels.copy()
 
     dataColumns = ["Length_Sil", "Height_Sil", "Width_Phos", "Height_Phos"]
 
     for entry in dataColumns:
-        mergedDfCM[entry]= mergedDfCM[entry].apply(mapToCm, inputMax= mergedDfCM[entry].iloc[0], outputMax=dimension)
+        mergedDfCM[entry]= mergedDfCM[entry].apply(mapToCm, inputMax= mergedDfCM[entry].dropna().iloc[0], outputMax=dimension)
 
     if shape == "Rectangle":
         mergedDfCM["Volume"] = mergedDfCM["Length_Sil"] * mergedDfCM["Height_Sil"] * mergedDfCM["Width_Phos"]
@@ -132,4 +132,8 @@ def segmentFolder(mainFolderPath, shape, csvName = "meWhen", frameSkipNumber = 1
 
 def mapToCm(value, inputMax, outputMax):
     return (value * outputMax) / inputMax
+
+def natural_keys(entry):
+    # Splits text by numbers into integers for proper numeric sorting
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r"(\d+)", entry.name)]
 

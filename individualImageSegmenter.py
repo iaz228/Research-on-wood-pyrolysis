@@ -4,10 +4,7 @@
 
 import cv2
 import numpy as np
-from math import pi, sqrt, pow
-import csv
 from PIL import Image
-from tkinter.filedialog import askopenfilename
 import tkinter as Tk
 
 
