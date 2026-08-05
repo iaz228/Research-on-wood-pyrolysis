@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from tkinter.filedialog import askopenfilename
 
 
 def generateGraphs(inputCSV, shape="Rectangle"):
@@ -83,7 +84,14 @@ def generateGraphs(inputCSV, shape="Rectangle"):
 
 
 def main():
-    generateGraphs("/Users/izalewski/Documents/TU-Dortmund ISP Research/fullRun.csv")
+    fileName = askopenfilename() 
+
+    shape = ""
+
+    while shape != "Circle" or shape != "Rectangle":
+        shape = input("Please input shape (Circle or Rectangle): ")
+
+    generateGraphs(inputCSV=fileName, shape=shape)
 
 if __name__=="__main__":
     main()
